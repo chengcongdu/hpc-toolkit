@@ -23,6 +23,12 @@ vars:
   # The following line must be updated for this example to work.
   authorized_cidr: <your-ip-address>/32
 
+# GCS bucket for persisting the Terraform state
+terraform_backend_defaults:
+  type: gcs
+  configuration:
+    bucket: gke-a3-mega-demo
+
 deployment_groups:
 - group: setup
   modules:
