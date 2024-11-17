@@ -53,8 +53,21 @@ deployment_groups:
     settings:
       prefix_length: 24
 
+
 - group: primary
   modules:
+  # allow parallelstore connection
+  - id: parallelstore_firewall_rule
+    source: modules/network/firewall-rules
+    use: [network1]
+    settings:
+      ingress_rules:
+      - name: $(vars.deployment_name)-allow-parallelstore-traffic
+        description: Allow parallelstore traffic
+        source_ranges:
+        - $(private_service_access.cidr_range)
+        allow:
+        - protocol: tcp
 
   - id: gpunets
     source: modules/network/multivpc
@@ -69,6 +82,8 @@ deployment_groups:
     source: modules/scheduler/gke-cluster
     use: [network1, gpunets]
     settings:
+      min_master_version: 1.30.4-gke.1348000
+      configure_workload_identity_sa: true
       enable_parallelstore_csi: true # enable Parallelstore for the cluster
       enable_private_endpoint: false  # Allows for access from authorized public IPs
       master_authorized_networks:
@@ -87,7 +102,7 @@ deployment_groups:
       sc_reclaim_policy: Retain # Use Retain if you want to volume and parallelstore resource will remain after
       sc_topology_zones: [$(vars.zone)]
       pvc_count: 1
-      capacity_gb: 60000 # from 12,000 GiB to 100,000 GiB, in multiples of 4,000 GiB
+      capacity_gb: 12000 # from 12,000 GiB to 100,000 GiB, in multiples of 4,000 GiB
 
   - id: default_pool
     source: modules/compute/gke-node-pool
@@ -109,7 +124,6 @@ deployment_groups:
     settings:
       machine_type: a3-megagpu-8g
       static_node_count: 8
-      local_ssd_count_nvme_block: 16
       disk_size_gb: 200
       reservation_affinity:
         consume_reservation_type: SPECIFIC_RESERVATION
